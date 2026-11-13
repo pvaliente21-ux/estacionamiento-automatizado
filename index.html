@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Estacionamiento automatizado</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: barra de navegación fija, portada corta con las cifras del proyecto, la maqueta 3D como pieza central y debajo las secciones técnicas en una sola columna ancha */
+:root{
+  --bg:#eef0ef; --surface:#fbfbfa; --ink:#1b211f; --muted:#5e6866; --line:#d3d9d6;
+  --accent:#c2410c; --on:#15803d; --off:#9aa5a1; --warn:#b91c1c; --amber:#b45309;
+  --scene:#dfe5e7; --band:#1b211f; --band-ink:#f1f4f2; --band-muted:#a9b3b0;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111514;--surface:#191e1d;--ink:#e7ecea;--muted:#9da8a5;--line:#2c3533;--accent:#f97316;--on:#4ade80;--off:#5b6663;--warn:#f87171;--amber:#fbbf24;--scene:#1c2326;--band:#0b0e0d;--band-ink:#e7ecea;--band-muted:#8f9a97;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111514;--surface:#191e1d;--ink:#e7ecea;--muted:#9da8a5;--line:#2c3533;--accent:#f97316;--on:#4ade80;--off:#5b6663;--warn:#f87171;--amber:#fbbf24;--scene:#1c2326;--band:#0b0e0d;--band-ink:#e7ecea;--band-muted:#8f9a97;color-scheme:dark}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--band)}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.in{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* navegación */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--band);color:var(--band-ink)}
+.nav .in{display:flex;align-items:center;gap:8px 22px;flex-wrap:wrap;padding-block:10px}
+.brand{font:600 14px var(--mono);letter-spacing:.04em;color:var(--band-ink);text-decoration:none;margin-right:auto;display:flex;align-items:center;gap:9px}
+.brand i{width:22px;height:22px;border-radius:5px;background:var(--accent);display:grid;place-items:center;font:700 13px var(--mono);font-style:normal;color:#fff}
+.nav nav{display:flex;gap:4px 16px;flex-wrap:wrap}
+.nav nav a{color:var(--band-muted);text-decoration:none;font-size:14px;padding:2px 0}
+.nav nav a:hover{color:var(--band-ink)}
+
+/* portada */
+.hero{padding-block:44px 30px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent)}
+h1{margin:8px 0 12px;font-size:clamp(30px,5vw,50px);line-height:1.08;letter-spacing:-.01em;text-wrap:balance;max-width:20ch}
+.lead{margin:0;max-width:66ch;color:var(--muted);font-size:17px}
+.facts{display:flex;flex-wrap:wrap;gap:10px 34px;margin:26px 0 0;padding:16px 0 0;border-top:1px solid var(--line)}
+.facts div{display:flex;flex-direction:column}
+.facts b{font:600 28px/1.1 var(--mono);font-variant-numeric:tabular-nums}
+.facts span{font-size:13px;color:var(--muted)}
+
+/* secciones */
+section{padding-block:38px;scroll-margin-top:calc(56px + env(safe-area-inset-top,0px))}
+section + section{border-top:1px solid var(--line)}
+h2{margin:6px 0 10px;font-size:clamp(22px,3vw,30px);line-height:1.15;text-wrap:balance}
+h3{margin:0 0 4px;font-size:16px}
+.sub{margin:0 0 22px;max-width:70ch;color:var(--muted)}
+.small{font-size:14px;color:var(--muted);max-width:76ch}
+
+/* maqueta 3D */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+@media (max-width:980px){.layout{grid-template-columns:minmax(0,1fr)}}
+.viewer{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--scene);height:min(72vh,660px);min-height:420px;max-width:100%}
+@media (max-width:600px){.viewer{height:62vh;min-height:360px}}
+.viewer canvas{display:block;width:100%;height:100%;touch-action:none}
+.lbl-layer{position:absolute;inset:0;pointer-events:none}
+.lbl{font:600 11px var(--mono);color:#fff;background:rgba(20,26,24,.82);padding:2px 7px;border-radius:5px;white-space:nowrap;transform:translateY(-10px)}
+.bar{position:absolute;left:10px;right:10px;top:10px;display:flex;flex-wrap:wrap;gap:6px;pointer-events:none}
+.bar>*{pointer-events:auto}
+.btn{font:500 13px var(--sans);border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.9);color:#1b211f;border-radius:8px;padding:7px 11px;cursor:pointer;backdrop-filter:blur(6px);-webkit-user-select:none;user-select:none}
+.btn:hover{background:#fff}
+.btn.primary{background:#1b211f;color:#fff;border-color:#1b211f}
+.btn.primary:hover{background:#2c3533}
+.btn[aria-pressed="true"]{background:#c2410c;color:#fff;border-color:#c2410c}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.views{position:absolute;left:10px;bottom:10px;display:flex;gap:4px;flex-wrap:wrap}
+.views .btn{font-size:12px;padding:5px 9px}
+.hint{position:absolute;right:12px;bottom:12px;font:12px var(--sans);color:#3d4644;background:rgba(255,255,255,.75);padding:3px 8px;border-radius:6px}
+@media (max-width:600px){.hint{display:none}}
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.card h3{margin:0;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.count{display:flex;align-items:baseline;gap:10px}
+.count b{font:600 54px/1 var(--mono);font-variant-numeric:tabular-nums}
+.count span{color:var(--muted);font-size:14px}
+.spots{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.spot{font:600 12px var(--mono);text-align:center;padding:7px 0;border-radius:6px;color:#fff;background:var(--on);transition:background .3s}
+.spot.occ{background:var(--warn)}
+.sig{display:grid;grid-template-columns:1fr auto;gap:6px 10px;font-size:13.5px;align-items:center;margin:0}
+.sig dt small{display:block;color:var(--muted);font:11px var(--mono)}
+.sig dd{margin:0;font:600 12px var(--mono);padding:2px 8px;border-radius:999px;background:var(--line);color:var(--muted);min-width:34px;text-align:center}
+.sig dd.hi{background:var(--on);color:#fff}
+.sig dd.hi.bad{background:var(--warn)}
+.sig dd.hi.amb{background:var(--amber)}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted);max-height:150px;overflow:auto}
+.log li b{color:var(--ink);font-weight:500}
+.log time{font:11px var(--mono);margin-right:6px}
+
+/* diagrama de bloques */
+.flow{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1.15fr) auto minmax(0,1fr);gap:12px;align-items:center;margin-bottom:30px}
+.flow ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.flow li{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 10px;font-size:14px}
+.flow .cap{font:600 11px var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.flow .arrow{font:600 22px var(--mono);color:var(--accent)}
+.core{background:var(--band);color:var(--band-ink);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px}
+.core strong{font-size:17px}
+.core p{margin:0;font-size:14px;color:var(--band-muted)}
+.core .tap{margin-top:6px;padding-top:10px;border-top:1px dashed var(--band-muted);font:13px var(--mono);color:var(--band-ink)}
+@media (max-width:820px){.flow{grid-template-columns:minmax(0,1fr)}.flow .arrow{text-align:center;transform:rotate(90deg)}}
+
+.blocks{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:22px 36px}
+.blocks article{min-width:0}
+.blocks code{display:block;font:500 12px var(--mono);color:var(--accent);margin-bottom:3px}
+.blocks p{margin:0;font-size:15px;color:var(--muted)}
+
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:26px 36px;align-items:start}
+.two>*{min-width:0}
+.eq{margin:0;background:var(--band);color:var(--band-ink);border-radius:10px;padding:16px 18px;font:14px/1.9 var(--mono);overflow-x:auto;white-space:pre}
+.eq em{font-style:normal;color:var(--band-muted)}
+
+/* tablas */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.m{font-family:var(--mono);font-size:13.5px;white-space:nowrap}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(--off)}
+.dot.g{background:var(--on)} .dot.r{background:var(--warn)}
+
+/* placas */
+.boards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.board{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;min-width:0}
+.board .tag{font:600 11px var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--accent)}
+.board .dim{font:600 24px/1.2 var(--mono);margin:4px 0 10px;font-variant-numeric:tabular-nums}
+.board p{margin:0 0 8px;font-size:14.5px;color:var(--muted)}
+.board p:last-child{margin-bottom:0}
+
+/* pruebas */
+.stages{list-style:none;margin:0 0 26px;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:0 28px}
+.stages li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:13px 0;border-top:1px solid var(--line)}
+.stages .k{font:600 20px/1.2 var(--mono);color:var(--accent)}
+.stages b{display:block}
+.stages span{font-size:14px;color:var(--muted)}
+.demo{margin:0;padding-left:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:8px 40px;font-size:15px}
+.demo li{padding-left:4px}
+.demo b{font-weight:600}
+
+/* documentos */
+.docs{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:12px}
+.docs a{display:block;height:100%;box-sizing:border-box;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;text-decoration:none;color:var(--ink)}
+.docs a:hover{border-color:var(--accent)}
+.docs b{display:block}
+.docs span{font-size:14px;color:var(--muted)}
+.docs i{font:500 11px var(--mono);font-style:normal;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+
+footer{background:var(--band);color:var(--band-muted);font-size:13.5px;margin-top:20px}
+footer .in{padding-block:22px}
+footer p{margin:0;max-width:80ch}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}.spot{transition:none}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="in">
+    <a class="brand" href="#inicio"><i>P</i>ESTACIONAMIENTO</a>
+    <nav aria-label="Secciones">
+      <a href="#maqueta">Maqueta 3D</a>
+      <a href="#logica">Lógica</a>
+      <a href="#senales">Entradas y salidas</a>
+      <a href="#placas">Placas</a>
+      <a href="#materiales">Materiales</a>
+      <a href="#pruebas">Pruebas</a>
+      <a href="#documentos">Documentos</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="in hero" id="inicio">
+  <div class="eyebrow">Laboratorio de Electrónica 2 · Trabajo final</div>
+  <h1>Estacionamiento automatizado de 6 lugares</h1>
+  <p class="lead">Control de acceso y ocupación de un estacionamiento cerrado, resuelto con compuertas e integrados TTL. Un sensor por lugar cuenta los espacios libres, el portón de entrada solo abre si hay lugar y el de salida abre siempre. El Arduino no decide nada: solo muestra el estado en una pantalla.</p>
+  <div class="facts">
+    <div><b>6</b><span>lugares</span></div>
+    <div><b>8</b><span>sensores IR</span></div>
+    <div><b>2</b><span>portones con servo SG90</span></div>
+    <div><b>17</b><span>integrados</span></div>
+    <div><b>2</b><span>placas doble faz</span></div>
+    <div><b>5 V</b><span>fuente única de 3 A</span></div>
+  </div>
+</div>
+
+<section id="maqueta"><div class="in">
+  <div class="eyebrow">Simulación</div>
+  <h2>Maqueta 3D</h2>
+  <p class="sub">Los autos entran y salen siguiendo la misma lógica del circuito. Podés llenar el estacionamiento, hacer de noche, liberar gas o mantener apretada la prueba de luces, y ver cómo responde cada señal.</p>
+  <div class="layout">
+    <div class="viewer" id="viewer">
+      <div class="lbl-layer" id="labels"></div>
+      <div class="bar" role="toolbar" aria-label="Simulación">
+        <button class="btn primary" id="bIn">Entra un auto</button>
+        <button class="btn primary" id="bOut">Sale un auto</button>
+        <button class="btn primary" id="bFull">Llenar todo</button>
+        <button class="btn" id="bAuto" aria-pressed="true">Demo automática</button>
+        <button class="btn" id="bNight" aria-pressed="false">Noche</button>
+        <button class="btn" id="bGas">Liberar gas</button>
+        <button class="btn" id="bTest">Prueba de luces (mantener)</button>
+        <button class="btn" id="bLbl" aria-pressed="false">Nombres</button>
+        <button class="btn" id="bSnd" aria-pressed="false">Sonido</button>
+      </div>
+      <div class="views" role="group" aria-label="Vistas">
+        <button class="btn" data-v="general">General</button>
+        <button class="btn" data-v="entrada">Entrada</button>
+        <button class="btn" data-v="interior">Interior</button>
+        <button class="btn" data-v="electronica">Electrónica</button>
+        <button class="btn" data-v="planta">Planta</button>
+      </div>
+      <div class="hint">Arrastrá para girar · rueda o pellizco para acercar</div>
+    </div>
+    <aside class="panel">
+      <div class="card">
+        <h3>Display de entrada</h3>
+        <div class="count"><b id="cnt">2</b><span>lugares libres de 6</span></div>
+        <div class="spots" id="spots"></div>
+      </div>
+      <div class="card">
+        <h3>Señales del circuito</h3>
+        <dl class="sig" id="sig"></dl>
+      </div>
+      <div class="card">
+        <h3>Lo que pasó</h3>
+        <ul class="log" id="log"></ul>
+      </div>
+    </aside>
+  </div>
+</div></section>
+
+<section id="logica"><div class="in">
+  <div class="eyebrow">Funcionamiento</div>
+  <h2>Toda la decisión está en el circuito lógico</h2>
+  <p class="sub">Los sensores y el pulsador entran al circuito, que maneja directamente los portones, el display, los LEDs y los actuadores. El Arduino lee 13 señales y las pasa por USB a la notebook.</p>
+
+  <div class="flow">
+    <div>
+      <p class="cap">6 entradas</p>
+      <ul>
+        <li>Sensores IR de los lugares L1 a L6</li>
+        <li>Sensor IR de acceso</li>
+        <li>Sensor IR de salida</li>
+        <li>Pulsador de prueba de luces</li>
+        <li>Sensor de luz (LDR)</li>
+        <li>Sensor de gas y humo (MQ-2)</li>
+      </ul>
+    </div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="core">
+      <strong>Circuito lógico TTL</strong>
+      <p>Schmitt trigger, sumadores, compuertas, cinco 555 y una llave analógica. Cuenta los lugares libres y decide cuándo abrir, avisar, iluminar o ventilar.</p>
+      <div class="tap">↳ Arduino Uno → USB → notebook → pantalla HDMI</div>
+    </div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div>
+      <p class="cap">9 salidas</p>
+      <ul>
+        <li>Portón de entrada y portón de salida</li>
+        <li>Display de 7 segmentos (0 a 6)</li>
+        <li>LED verde LIBRE y LED rojo LLENO</li>
+        <li>Buzzer</li>
+        <li>Luces internas</li>
+        <li>Extractor de humo</li>
+        <li>Plano en pantalla</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="blocks">
+    <article><code>3 × 74LS14</code><h3>Acondicionamiento</h3><p>Los sensores y el pulsador pasan por inversores Schmitt trigger para tener flancos limpios y sin rebote. De ahí sale Fn = 1 si el lugar n está libre.</p></article>
+    <article><code>3 × 74LS83 + 74LS47</code><h3>Conteo de lugares libres</h3><p>Dos sumadores cuentan los lugares de a tres y un tercero suma ambos resultados. El total sale en BCD y el decodificador lo muestra en el display.</p></article>
+    <article><code>74LS30 + 74LS04</code><h3>LIBRE y LLENO</h3><p>Las seis señales de ocupado entran a una NAND de 8 entradas. Su salida vale 0 solo con todo ocupado, así que es LIBRE; un inversor da LLENO.</p></article>
+    <article><code>74LS08 + 2 × NE555 + CD4066</code><h3>Portón de entrada</h3><p>ACC y LIBRE disparan un monoestable de unos 5 s. Mientras dura, la llave analógica cambia el pulso del 555 astable de 50 Hz que mueve el servo: de 1 ms (cerrado) a 2 ms (abierto).</p></article>
+    <article><code>2 × NE555 + CD4066</code><h3>Portón de salida</h3><p>Cada auto que corta el sensor de salida dispara otro monoestable de 5 s y un segundo PWM. No depende de que haya lugar: el auto siempre puede salir.</p></article>
+    <article><code>NE555</code><h3>Aviso sonoro</h3><p>Si llega un auto con el estacionamiento lleno, un quinto 555 hace sonar el buzzer unos 3 s y el portón no abre.</p></article>
+    <article><code>LDR (LM393) + 2N2222</code><h3>Iluminación interna</h3><p>Con poca luz adentro, la salida digital del módulo LDR enciende los cuatro LEDs blancos a través de un transistor.</p></article>
+    <article><code>MQ-2 + TIP120 + 1N4007</code><h3>Extractor de humo</h3><p>Cuando el gas o el humo superan el umbral, el ventilador arranca y sigue girando hasta que el aire se limpia.</p></article>
+    <article><code>LT del 74LS47 + 74LS32</code><h3>Prueba de luces</h3><p>El pulsador enciende todos los segmentos del display y los dos LEDs a la vez, para comprobar que ninguno está quemado.</p></article>
+    <article><code>Arduino Uno + Python (pygame)</code><h3>Visualización</h3><p>Lee F1 a F6, los 3 bits del conteo, LLENO, GAS y los dos portones, y la notebook dibuja el plano con cada lugar en verde o rojo.</p></article>
+  </div>
+
+  <div class="two" style="margin-top:34px">
+    <div>
+      <h3>Ecuaciones</h3>
+      <p class="small" style="margin:0 0 10px">OCn vale 1 si el lugar n está ocupado y ACC vale 1 si hay un auto frente a la entrada.</p>
+<pre class="eq">LIBRE   = NAND(OC1 … OC6)
+LLENO   = NOT LIBRE
+ENTRAR  = ACC · LIBRE     <em>→ abre 5 s</em>
+AVISO   = ACC · LLENO     <em>→ buzzer 3 s</em>
+PORTON_S = SAL            <em>→ abre 5 s</em></pre>
+    </div>
+    <div>
+      <h3>Lo que muestra el display</h3>
+      <div class="tw"><table>
+        <thead><tr><th class="n">Ocupados</th><th class="n">Display</th><th>Q2 Q1 Q0</th><th>Indicador</th></tr></thead>
+        <tbody>
+          <tr><td class="n">0</td><td class="n">6</td><td class="m">1 1 0</td><td><span class="dot g"></span>LIBRE</td></tr>
+          <tr><td class="n">1</td><td class="n">5</td><td class="m">1 0 1</td><td><span class="dot g"></span>LIBRE</td></tr>
+          <tr><td class="n">2</td><td class="n">4</td><td class="m">1 0 0</td><td><span class="dot g"></span>LIBRE</td></tr>
+          <tr><td class="n">3</td><td class="n">3</td><td class="m">0 1 1</td><td><span class="dot g"></span>LIBRE</td></tr>
+          <tr><td class="n">4</td><td class="n">2</td><td class="m">0 1 0</td><td><span class="dot g"></span>LIBRE</td></tr>
+          <tr><td class="n">5</td><td class="n">1</td><td class="m">0 0 1</td><td><span class="dot g"></span>LIBRE</td></tr>
+          <tr><td class="n">6</td><td class="n">0</td><td class="m">0 0 0</td><td><span class="dot r"></span>LLENO</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="senales"><div class="in">
+  <div class="eyebrow">Señales</div>
+  <h2>Entradas y salidas</h2>
+  <p class="sub">Lo que el circuito lee de la maqueta y lo que acciona en ella.</p>
+  <div class="two">
+    <div>
+      <h3 style="margin-bottom:10px">Entradas</h3>
+      <div class="tw"><table>
+        <thead><tr><th>Dispositivo</th><th>Función</th></tr></thead>
+        <tbody>
+          <tr><td>Sensores IR de los lugares (L1 a L6)</td><td>Detectan si cada lugar está ocupado.</td></tr>
+          <tr><td>Sensor IR de acceso</td><td>Detecta un auto esperando frente al portón de entrada.</td></tr>
+          <tr><td>Sensor IR de salida</td><td>Detecta un auto que quiere salir y abre el portón de salida.</td></tr>
+          <tr><td>Pulsador de prueba de luces</td><td>Enciende todos los indicadores a la vez para verificarlos.</td></tr>
+          <tr><td>Sensor de luz (módulo LDR)</td><td>Detecta poca iluminación dentro del estacionamiento.</td></tr>
+          <tr><td>Sensor de gas y humo (MQ-2)</td><td>Detecta acumulación de gases o humo de los motores.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:10px">Salidas</h3>
+      <div class="tw"><table>
+        <thead><tr><th>Dispositivo</th><th>Función</th></tr></thead>
+        <tbody>
+          <tr><td>Servomotor del portón de entrada</td><td>Abre unos 5 s si hay lugar y luego cierra.</td></tr>
+          <tr><td>Servomotor del portón de salida</td><td>Abre unos 5 s cuando un auto quiere salir.</td></tr>
+          <tr><td>Display de 7 segmentos</td><td>Muestra cuántos lugares quedan libres, de 0 a 6.</td></tr>
+          <tr><td>LED verde LIBRE</td><td>Encendido mientras quede al menos un lugar.</td></tr>
+          <tr><td>LED rojo LLENO</td><td>Encendido con los 6 lugares ocupados.</td></tr>
+          <tr><td>Buzzer</td><td>Suena unos 3 s si llega un auto con todo lleno.</td></tr>
+          <tr><td>Luces internas (LEDs blancos)</td><td>Se encienden cuando el interior está oscuro.</td></tr>
+          <tr><td>Extractor de humo</td><td>Gira mientras se detecte exceso de gas o humo.</td></tr>
+          <tr><td>Pantalla HDMI</td><td>Plano de los 6 lugares, estado de los portones y aviso de gas.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="placas"><div class="in">
+  <div class="eyebrow">Hardware</div>
+  <h2>Dos placas y la maqueta</h2>
+  <p class="sub">La lógica y la potencia van en placas separadas, unidas por un cable de 12 pines. Los sensores, servos y el ventilador quedan en la maqueta y se conectan con cables Dupont.</p>
+  <div class="boards">
+    <div class="board">
+      <div class="tag">Placa A · lógica</div>
+      <div class="dim">234 × 117 mm</div>
+      <p>11 integrados TTL: tres 74LS14, tres 74LS83, 74LS47, 74LS30, 74LS04, 74LS08 y 74LS32.</p>
+      <p>Lleva el display, los LEDs LIBRE y LLENO, las entradas de los 8 sensores IR y la tira de pines hacia el Arduino.</p>
+    </div>
+    <div class="board">
+      <div class="tag">Placa B · potencia</div>
+      <div class="dim">127 × 107 mm</div>
+      <p>Cinco NE555 y el CD4066: tiempos de apertura, PWM de los dos servos y buzzer.</p>
+      <p>Lleva los transistores de las luces (2N2222) y del extractor (TIP120), los trimmers de ajuste de cada servo y la entrada de la fuente.</p>
+    </div>
+    <div class="board">
+      <div class="tag">Fabricación</div>
+      <div class="dim">91 vías</div>
+      <p>Placas doble faz hechas por transferencia y percloruro férrico, con zócalos en todos los integrados para cambiarlos sin desoldar.</p>
+      <p>Un capacitor de 100 nF al lado de cada integrado y 470 µF cerca de los servos para que no metan ruido en la lógica.</p>
+    </div>
+  </div>
+</div></section>
+
+<section id="materiales"><div class="in">
+  <div class="eyebrow">Componentes</div>
+  <h2>Materiales principales</h2>
+  <p class="sub">Integrados, módulos y actuadores. La lista completa tiene 54 ítems, con resistencias, capacitores, conexiones y lo necesario para fabricar las placas.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Componente</th><th>Modelo</th><th class="n">Cant.</th><th>Placa</th><th>Uso</th></tr></thead>
+    <tbody>
+      <tr><td>Inversor Schmitt trigger</td><td class="m">74LS14</td><td class="n">3</td><td>A</td><td>Acondicionamiento de sensores y pulsador</td></tr>
+      <tr><td>Sumador de 4 bits</td><td class="m">74LS83</td><td class="n">3</td><td>A</td><td>Conteo de lugares libres. No sirve el 74LS283: tiene otro orden de pines</td></tr>
+      <tr><td>Decodificador BCD a 7 segmentos</td><td class="m">74LS47</td><td class="n">1</td><td>A</td><td>Display de lugares libres</td></tr>
+      <tr><td>NAND de 8 entradas</td><td class="m">74LS30</td><td class="n">1</td><td>A</td><td>Señal LIBRE</td></tr>
+      <tr><td>Inversor</td><td class="m">74LS04</td><td class="n">1</td><td>A</td><td>LLENO y disparo de los 555</td></tr>
+      <tr><td>AND</td><td class="m">74LS08</td><td class="n">1</td><td>A</td><td>Apertura de entrada y aviso de lleno</td></tr>
+      <tr><td>OR</td><td class="m">74LS32</td><td class="n">1</td><td>A</td><td>Prueba de luces</td></tr>
+      <tr><td>Temporizador</td><td class="m">NE555</td><td class="n">5</td><td>B</td><td>Tiempo y PWM de cada portón, y buzzer</td></tr>
+      <tr><td>Llave analógica</td><td class="m">CD4066</td><td class="n">1</td><td>B</td><td>Ancho de pulso de los dos servos</td></tr>
+      <tr><td>Display de 7 segmentos</td><td class="m">Ánodo común 0,56"</td><td class="n">1</td><td>A</td><td>Lugares libres</td></tr>
+      <tr><td>Módulo sensor IR de obstáculo</td><td class="m">FC-51</td><td class="n">8</td><td>Maqueta</td><td>6 lugares, entrada y salida</td></tr>
+      <tr><td>Módulo sensor de luz</td><td class="m">LDR + LM393</td><td class="n">1</td><td>Maqueta</td><td>Iluminación interna</td></tr>
+      <tr><td>Módulo sensor de gas</td><td class="m">MQ-2</td><td class="n">1</td><td>Maqueta</td><td>Detección de gas y humo</td></tr>
+      <tr><td>Servomotor</td><td class="m">SG90</td><td class="n">2</td><td>Maqueta</td><td>Portón de entrada y portón de salida</td></tr>
+      <tr><td>Ventilador</td><td class="m">5 V, 40 × 40 mm</td><td class="n">1</td><td>Maqueta</td><td>Extractor de humo</td></tr>
+      <tr><td>Buzzer activo</td><td class="m">5 V</td><td class="n">1</td><td>B</td><td>Aviso de lleno</td></tr>
+      <tr><td>Arduino</td><td class="m">Uno</td><td class="n">1</td><td>Externo</td><td>Solo visualización</td></tr>
+      <tr><td>Fuente de alimentación</td><td class="m">5 V, 3 A</td><td class="n">1</td><td>Externo</td><td>Lógica, servos, sensores y ventilador</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small" style="margin:12px 0 0"><a href="https://claude.ai/artifact/2Ga9TsWxZUruu1L56t2Kix">Abrir la lista completa de materiales</a>, con las referencias de cada componente y el cálculo del costo.</p>
+</div></section>
+
+<section id="pruebas"><div class="in">
+  <div class="eyebrow">Verificación</div>
+  <h2>Protocolo de pruebas</h2>
+  <p class="sub">49 pruebas en 8 etapas, de lo más simple a lo más completo. No se pasa a una etapa si la anterior no dio bien.</p>
+  <ol class="stages">
+    <li><span class="k">0</span><div><b>Inspección sin alimentar</b><span>Cortos, vías, polaridad, zócalos y cable entre placas.</span></div></li>
+    <li><span class="k">1</span><div><b>Alimentación</b><span>4,75 a 5,25 V en cada zócalo y menos de 400 mA en reposo.</span></div></li>
+    <li><span class="k">2</span><div><b>Sensores de los lugares</b><span>Ajuste de distancia y estado de cada lugar, sin interferencias.</span></div></li>
+    <li><span class="k">3</span><div><b>Conteo y display</b><span>Tabla de combinaciones, LIBRE y LLENO, y prueba de luces.</span></div></li>
+    <li><span class="k">4</span><div><b>Portones y buzzer</b><span>PWM de 50 Hz, apertura de 4,5 a 6 s y rechazo con todo lleno.</span></div></li>
+    <li><span class="k">5</span><div><b>Luces y extractor</b><span>Umbral del LDR y respuesta del MQ-2 en 2 a 5 s.</span></div></li>
+    <li><span class="k">6</span><div><b>Arduino y pantalla</b><span>Las 13 señales en el Monitor serie y el plano en menos de 1 s.</span></div></li>
+    <li><span class="k">7</span><div><b>Prueba integral</b><span>La secuencia completa y 15 minutos de funcionamiento.</span></div></li>
+  </ol>
+  <h3 style="margin-bottom:12px">Secuencia para la defensa</h3>
+  <ol class="demo">
+    <li><b>Llenar.</b> Entran seis autos de a uno y el display baja de 6 a 0. Con el sexto, el LED pasa de verde a rojo.</li>
+    <li><b>Rechazo.</b> Llega un séptimo auto: el portón no abre y suena el buzzer.</li>
+    <li><b>Sale uno.</b> Abre el portón de salida, el display marca 1 y el LED vuelve a verde.</li>
+    <li><b>Entra el que esperaba.</b> Ahora el portón sí abre y el display vuelve a 0.</li>
+    <li><b>Noche.</b> Se apaga la luz de la sala y se encienden las luces internas.</li>
+    <li><b>Gas.</b> Con un encendedor sin prender arranca el extractor y aparece el aviso en pantalla.</li>
+    <li><b>Prueba de luces.</b> Display en 8 y ambos LEDs encendidos mientras se aprieta el pulsador.</li>
+    <li><b>Resistencia.</b> 15 minutos funcionando sin que nada se caliente de más.</li>
+  </ol>
+  <p class="small" style="margin:18px 0 0"><a href="https://claude.ai/artifact/EXqwBX3WxCppHbujgCg9LP">Abrir el protocolo completo</a>, con los pines a medir, los valores esperados y qué revisar si algo falla.</p>
+</div></section>
+
+<section id="documentos"><div class="in">
+  <div class="eyebrow">Carpeta del proyecto</div>
+  <h2>Documentos</h2>
+  <p class="sub">Cada parte del trabajo tiene su propio documento. Los enlaces se abren en una pestaña nueva.</p>
+  <ul class="docs">
+    <li><a href="https://claude.ai/artifact/919c63xa8UN3cX5yTVUqbf"><i>Documento</i><b>Propuesta de trabajo final</b><span>Tema, diagrama de bloques, entradas, salidas y lista de componentes.</span></a></li>
+    <li><a href="https://claude.ai/artifact/382EeXqoVFMUooyDkQvmh3"><i>Circuito</i><b>Esquemático KiCad</b><span>El circuito completo, integrado por integrado.</span></a></li>
+    <li><a href="https://claude.ai/artifact/Tm59wLbC1Vf4FHnCwn3PBh"><i>Circuito</i><b>Planos eléctricos</b><span>Conexiones entre placas, sensores y actuadores.</span></a></li>
+    <li><a href="https://claude.ai/artifact/Cf8VnJSksWbmh7ZRmNsgN1"><i>Fabricación</i><b>Placas</b><span>Diseño de la placa A de lógica y la placa B de potencia.</span></a></li>
+    <li><a href="https://claude.ai/artifact/2Ga9TsWxZUruu1L56t2Kix"><i>Planilla</i><b>Lista de materiales</b><span>Los 54 ítems con cantidades, referencias y costo.</span></a></li>
+    <li><a href="https://claude.ai/artifact/EXqwBX3WxCppHbujgCg9LP"><i>Documento</i><b>Protocolo de pruebas</b><span>Las 49 pruebas, etapa por etapa, con casillas para tildar.</span></a></li>
+    <li><a href="https://claude.ai/artifact/WWm9D8LpVVa5QT217R8nhK"><i>Simulación</i><b>Maqueta 3D</b><span>La misma maqueta de esta página, a pantalla completa.</span></a></li>
+  </ul>
+</div></section>
+</main>
+
+<footer><div class="in">
+  <p>Universidad Católica "Nuestra Señora de la Asunción" · Campus Alto Paraná · Facultad de Ciencias y Tecnología · Ingeniería Electromecánica con Orientación Electrónica · Laboratorio de Electrónica 2.</p>
+</div></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+<script>
+(() => {
+const viewer = document.getElementById('viewer');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- renderer, escena, cámara ---------- */
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+viewer.prepend(renderer.domElement);
+
+const labelR = new THREE.CSS2DRenderer({element: document.getElementById('labels')});
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, 1, 0.5, 900);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.maxPolarAngle = Math.PI * 0.47; controls.minDistance = 18; controls.maxDistance = 260;
+
+const VIEWS = {
+  general:     {p:[-6, 84, 118], t:[18, 0, -2]},
+  entrada:     {p:[-34, 16, 44],  t:[-14, 3, 12]},
+  interior:    {p:[-6, 34, 26],   t:[0, 0, -8]},
+  electronica: {p:[88, 36, 44],   t:[56, -1, -4]},
+  planta:      {p:[14, 130, 0.1], t:[14, 0, 0]},
+};
+let camAnim = null;
+function goView(name, instant){
+  const v = VIEWS[name];
+  const to = {p:new THREE.Vector3(...v.p), t:new THREE.Vector3(...v.t)};
+  if (instant || reduceMotion){ camera.position.copy(to.p); controls.target.copy(to.t); controls.update(); return; }
+  camAnim = {fromP:camera.position.clone(), fromT:controls.target.clone(), to, k:0};
+}
+goView('general', true);
+document.querySelectorAll('[data-v]').forEach(b => b.onclick = () => goView(b.dataset.v));
+
+/* ---------- luces ---------- */
+const hemi = new THREE.HemisphereLight(0xf4f7ff, 0x7a6a56, 0.8); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff3e2, 1.35);
+sun.position.set(-40, 90, 60); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, {left:-80, right:80, top:70, bottom:-70, near:10, far:250});
+sun.shadow.bias = -0.0004; sun.shadow.radius = 4;
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xdfe9ff, 0.35); fill.position.set(60, 40, -50); scene.add(fill);
+
+/* ---------- utilidades ---------- */
+const M = (color, o={}) => { const m = new THREE.MeshStandardMaterial(Object.assign({color, roughness:0.7, metalness:0}, o)); m.color.convertSRGBToLinear(); m.emissive.convertSRGBToLinear(); return m; };
+const setC = (c, hex) => c.setHex(hex).convertSRGBToLinear();
+function box(w, h, d, mat, x=0, y=0, z=0, parent=scene, shadow=true){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z); m.castShadow = shadow; m.receiveShadow = true; parent.add(m); return m;
+}
+function cyl(r, h, mat, x=0, y=0, z=0, parent=scene, seg=24){
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), mat);
+  m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
+}
+function canvasTex(w, h, draw){
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); draw(g, w, h);
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8;
+  t.userData = {c, g}; return t;
+}
+const labels = [];
+function label(text, x, y, z){
+  const d = document.createElement('div'); d.className = 'lbl'; d.textContent = text;
+  const o = new THREE.CSS2DObject(d); o.position.set(x, y, z); o.visible = false; scene.add(o); labels.push(o);
+}
+
+/* ---------- mesa y base ---------- */
+const table = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), M(0x9b8f80, {roughness:0.9}));
+table.rotation.x = -Math.PI/2; table.position.y = -1.8; table.receiveShadow = true; scene.add(table);
+const woodTex = canvasTex(512, 512, (g, w, h) => {
+  g.fillStyle = '#d8c39e'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 140; i++){ g.strokeStyle = `rgba(150,110,60,${Math.random()*0.08})`; g.lineWidth = 1 + Math.random()*2;
+    const y = Math.random()*h; g.beginPath(); g.moveTo(0, y); g.bezierCurveTo(w*.3, y+Math.random()*8-4, w*.7, y+Math.random()*8-4, w, y); g.stroke(); }
+});
+woodTex.wrapS = woodTex.wrapT = THREE.RepeatWrapping; woodTex.repeat.set(2, 1.5);
+box(68, 1.8, 54, M(0xffffff, {map:woodTex, roughness:0.8}), 0, -0.9, 0);
+
+/* ---------- calle ---------- */
+const roadTex = canvasTex(1024, 128, (g, w, h) => {
+  g.fillStyle = '#3a3f44'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 2500; i++){ g.fillStyle = `rgba(255,255,255,${Math.random()*0.05})`; g.fillRect(Math.random()*w, Math.random()*h, 2, 2); }
+  g.fillStyle = '#e9d36a'; for (let x = 10; x < w; x += 60) g.fillRect(x, h/2-3, 32, 6);
+  g.fillStyle = '#e8e8e8'; g.fillRect(0, 4, w, 4); g.fillRect(0, h-8, w, 4);
+});
+const road = new THREE.Mesh(new THREE.PlaneGeometry(68, 10), M(0xffffff, {map:roadTex, roughness:0.95}));
+road.rotation.x = -Math.PI/2; road.position.set(0, 0.02, 21); road.receiveShadow = true; scene.add(road);
+/* veredas hacia los portones */
+const walkMat = M(0x8f969b, {roughness:0.95});
+box(8, 0.1, 4, walkMat, -14, 0.03, 14);
+box(8, 0.1, 4, walkMat, 14, 0.03, 14);
+
+/* ---------- piso del estacionamiento con líneas ---------- */
+const SPOTS = [-21.5, -12.9, -4.3, 4.3, 12.9, 21.5];
+const floorTex = canvasTex(1120, 600, (g, w, h) => {
+  const sx = w/56, sz = h/30, X = x => (x+28)*sx, Z = z => (z+18)*sz;
+  g.fillStyle = '#b9bdbf'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 9000; i++){ const v = Math.random(); g.fillStyle = `rgba(${v>0.5?255:0},${v>0.5?255:0},${v>0.5?255:0},${Math.random()*0.06})`; g.fillRect(Math.random()*w, Math.random()*h, 2, 2); }
+  g.fillStyle = '#9ea4a8'; g.fillRect(0, Z(-8), w, Z(12)-Z(-8));
+  g.strokeStyle = '#f7f7f2'; g.lineWidth = 5;
+  for (let i = 0; i <= 6; i++){ const x = X(-25.8 + i*8.6); g.beginPath(); g.moveTo(x, Z(-18)); g.lineTo(x, Z(-8)); g.stroke(); }
+  g.beginPath(); g.moveTo(X(-25.8), Z(-8)); g.lineTo(X(25.8), Z(-8)); g.stroke();
+  g.fillStyle = 'rgba(247,247,242,0.95)'; g.font = '700 46px "IBM Plex Mono", monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  SPOTS.forEach((x, i) => g.fillText(String(i+1), X(x), Z(-10)));
+  const arrow = (x, z, dir) => { g.save(); g.translate(X(x), Z(z)); g.rotate(dir); g.fillStyle = 'rgba(247,247,242,0.85)';
+    g.beginPath(); g.moveTo(0, -26); g.lineTo(16, -4); g.lineTo(6, -4); g.lineTo(6, 24); g.lineTo(-6, 24); g.lineTo(-6, -4); g.lineTo(-16, -4); g.closePath(); g.fill(); g.restore(); };
+  arrow(-14, 7, 0); arrow(14, 5, Math.PI); arrow(0, 1.5, Math.PI/2);
+  g.font = '600 26px "IBM Plex Sans", sans-serif'; g.fillStyle = 'rgba(247,247,242,0.9)';
+  g.fillText('ENTRADA', X(-14), Z(10.5)); g.fillText('SALIDA', X(14), Z(10.5));
+});
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(56, 30), M(0xffffff, {map:floorTex, roughness:0.9}));
+floor.rotation.x = -Math.PI/2; floor.position.set(0, 0.04, -3); floor.receiveShadow = true; scene.add(floor);
+
+/* ---------- paredes, columnas y techo de acrílico ---------- */
+const wallMat = M(0xf3f1ec, {roughness:0.85});
+const H = 7.5;
+box(57, H, 0.5, wallMat, 0, H/2, -18.25);
+box(0.5, H, 31, wallMat, -28.25, H/2, -3);
+box(0.5, H, 31, wallMat, 28.25, H/2, -3);
+box(10.5, H, 0.5, wallMat, -23.0, H/2, 12.25);
+box(21, H, 0.5, wallMat, 0, H/2, 12.25);
+box(10.5, H, 0.5, wallMat, 23.0, H/2, 12.25);
+/* dinteles sobre los portones */
+box(7, 1.6, 0.5, wallMat, -14, H-0.8, 12.25); box(7, 1.6, 0.5, wallMat, 14, H-0.8, 12.25);
+/* franja de color en el frente */
+const stripeMat = M(0xc2410c, {roughness:0.6});
+box(10.6, 0.7, 0.55, stripeMat, -23.0, H-0.6, 12.27, scene, false);
+box(21.1, 0.7, 0.55, stripeMat, 0, H-0.6, 12.27, scene, false);
+box(10.6, 0.7, 0.55, stripeMat, 23.0, H-0.6, 12.27, scene, false);
+/* cartel sobre el frente */
+const signTex = canvasTex(1024, 128, (g, w, h) => {
+  g.fillStyle = '#1b211f'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#ffffff'; g.font = '700 64px "IBM Plex Sans", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('ESTACIONAMIENTO', w/2, h/2+4);
+});
+const signMesh = new THREE.Mesh(new THREE.PlaneGeometry(16, 2), M(0xffffff, {map:signTex, roughness:0.5}));
+signMesh.position.set(0, H-1.9, 12.53); scene.add(signMesh);
+
+const roofMat = new THREE.MeshStandardMaterial({color:0xdff4ff, transparent:true, opacity:0.14, roughness:0.05, metalness:0, depthWrite:false, side:THREE.DoubleSide});
+const roof = new THREE.Mesh(new THREE.BoxGeometry(57, 0.3, 31), roofMat); roof.position.set(0, H+0.15, -3); scene.add(roof);
+const roofEdge = new THREE.LineSegments(new THREE.EdgesGeometry(roof.geometry), new THREE.LineBasicMaterial({color:0x9fc7d8, transparent:true, opacity:0.7}));
+roofEdge.position.copy(roof.position); scene.add(roofEdge);
+
+
+/* luces del techo */
+const roofLights = [];
+const lampOff = M(0xe9e9e4, {emissive:0x000000, roughness:0.4});
+[[-14,-11],[-14,1],[14,-11],[14,1]].forEach(([x, z]) => {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.35, 32), lampOff.clone());
+  m.position.set(x, H-0.2, z); scene.add(m);
+  const pl = new THREE.PointLight(0xfff6e0, 0, 30, 2); pl.position.set(x, H-1.2, z); scene.add(pl);
+  roofLights.push({m, pl});
+});
+label('Luces internas', -14, H+0.6, 1);
+
+/* LDR en el techo */
+const pcbBlue = M(0x1e4fa8, {roughness:0.5});
+box(2.2, 0.15, 1.4, pcbBlue, 0, H-0.15, -4, scene, false);
+cyl(0.32, 0.25, M(0xd9b56a, {roughness:0.4}), 0, H-0.35, -4.2);
+label('Sensor de luz (LDR)', 0, H+0.6, -4);
+
+/* ---------- sensores IR ---------- */
+function irModule(x, y, z, rotY){
+  const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rotY; scene.add(g);
+  box(2.0, 1.1, 0.14, pcbBlue, 0, 0, 0, g, false);
+  const tx = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.6, 16), M(0xdfe8f0, {roughness:0.2})); tx.rotation.x = Math.PI/2; tx.position.set(-0.45, 0, 0.35); g.add(tx);
+  const rx = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.6, 16), M(0x111111, {roughness:0.3})); rx.rotation.x = Math.PI/2; rx.position.set(0.45, 0, 0.35); g.add(rx);
+  const led = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), new THREE.MeshStandardMaterial({color:0x330000, emissive:0x000000})); led.position.set(0.75, 0.38, 0.1); g.add(led);
+  return led;
+}
+const spotLeds = SPOTS.map(x => irModule(x, 1.4, -17.9, 0));
+label('Sensores IR (uno por lugar)', -4.3, 3.2, -17.6);
+const postMat = M(0x3b4246, {roughness:0.5, metalness:0.3});
+box(0.5, 2.4, 0.5, postMat, -9.4, 1.2, 15.6);
+const accLed = irModule(-9.7, 1.6, 15.6, -Math.PI/2);
+box(0.5, 2.4, 0.5, postMat, 9.4, 1.2, 9.0);
+const salLed = irModule(9.7, 1.6, 9.0, Math.PI/2);
+label('Sensor de entrada', -9.4, 3.4, 15.6);
+label('Sensor de salida', 9.4, 3.4, 9.0);
+
+/* ---------- portones con servo ---------- */
+const armTex = canvasTex(256, 32, (g, w, h) => { for (let i = 0; i < 8; i++){ g.fillStyle = i%2 ? '#f5f5f0' : '#d7262b'; g.fillRect(i*w/8, 0, w/8, h); } });
+function gate(px, pz, dir){
+  box(0.9, 3.0, 0.9, M(0x2a3033, {roughness:0.5, metalness:0.2}), px, 1.5, pz);
+  box(1.3, 1.25, 2.3, M(0x1d4ed8, {roughness:0.45}), px, 3.4, pz);          // servo SG90
+  cyl(0.28, 0.4, M(0xffffff), px + dir*0.2, 3.85, pz+0.2).rotation.x = 0;
+  const pivot = new THREE.Group(); pivot.position.set(px + dir*0.75, 3.55, pz + 0.55); scene.add(pivot);
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.38, 0.32), M(0xffffff, {map:armTex, roughness:0.5}));
+  arm.position.x = dir*3.8; arm.castShadow = true; pivot.add(arm);
+  return {pivot, dir, angle:0};
+}
+const gateIn = gate(-18.3, 13.0, 1);
+const gateOut = gate(18.3, 13.0, -1);
+label('Portón de entrada (servo)', -18.3, 5.2, 13);
+label('Portón de salida (servo)', 18.3, 5.2, 13);
+
+/* ---------- cartel de entrada: display, LEDs y buzzer ---------- */
+box(0.5, 5.2, 0.5, postMat, -22.5, 2.6, 16.6);
+box(5.6, 4.2, 0.6, M(0x20262a, {roughness:0.5}), -22.5, 6.6, 16.6);
+const segTex = canvasTex(160, 240, () => {});
+const segMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 3.0), new THREE.MeshBasicMaterial({map:segTex, toneMapped:false}));
+segMesh.position.set(-23.6, 6.9, 16.92); scene.add(segMesh);
+const capTex = canvasTex(256, 64, (g, w, h) => { g.fillStyle = '#20262a'; g.fillRect(0, 0, w, h); g.fillStyle = '#e5e7e6'; g.font = '600 30px "IBM Plex Sans", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('LIBRES', w/2, h/2); });
+const cap = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.55), new THREE.MeshBasicMaterial({map:capTex}));
+cap.position.set(-23.6, 5.05, 16.92); scene.add(cap);
+function ledBulb(color, x, y, z){ const m = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 20), new THREE.MeshStandardMaterial({color, emissive:0x000000, roughness:0.25, transparent:true, opacity:0.95})); m.position.set(x, y, z); scene.add(m); return m; }
+const ledG = ledBulb(0x14532d, -21.1, 7.6, 17.0);
+const ledR = ledBulb(0x5b0f0f, -21.1, 6.1, 17.0);
+const buzzer = cyl(0.65, 0.6, M(0x111111, {roughness:0.6}), -22.5, 9.0, 16.6);
+label('Display de lugares libres', -22.5, 9.9, 16.6);
+
+function drawSeg(n, test){
+  const {c, g} = segTex.userData, w = c.width, h = c.height;
+  g.fillStyle = '#0d0f10'; g.fillRect(0, 0, w, h);
+  const segs = {a:[30,18,100,18], b:[132,28,132,110], c:[132,130,132,212], d:[30,222,100,222], e:[26,130,26,212], f:[26,28,26,110], g:[30,120,100,120]};
+  const map = {0:'abcdef',1:'bc',2:'abged',3:'abgcd',4:'fgbc',5:'afgcd',6:'afgedc',7:'abc',8:'abcdefg',9:'abcdfg'};
+  const on = test ? map[8] : map[n];
+  g.lineCap = 'round'; g.lineWidth = 18;
+  for (const k in segs){ const [x1,y1,x2,y2] = segs[k]; const lit = on.includes(k);
+    g.strokeStyle = lit ? '#ff3b2f' : 'rgba(255,60,47,0.08)'; g.shadowColor = '#ff3b2f'; g.shadowBlur = lit ? 18 : 0;
+    g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); }
+  g.shadowBlur = 0; segTex.needsUpdate = true;
+}
+
+/* ---------- MQ-2 y extractor ---------- */
+box(0.14, 2.0, 2.4, pcbBlue, 27.9, 4.4, -9, scene, false);
+const mq = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 0.9, 24), M(0xb8bcc0, {metalness:0.7, roughness:0.35}));
+mq.rotation.z = Math.PI/2; mq.position.set(27.4, 4.4, -9); scene.add(mq);
+label('Sensor de gas MQ-2', 27.4, 6.2, -9);
+box(1.0, 5.0, 5.0, M(0x1f2427, {roughness:0.5}), 28.7, 4.4, 2);
+const fan = new THREE.Group(); fan.position.set(28.1, 4.4, 2); scene.add(fan);
+for (let i = 0; i < 7; i++){
+  const b = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.9, 0.75), M(0x3a4044, {roughness:0.4}));
+  const piv = new THREE.Group(); piv.rotation.x = i*Math.PI*2/7; b.position.y = 1.0; b.rotation.y = 0.45; piv.add(b); fan.add(piv);
+}
+cyl(0.55, 0.3, M(0x15181a), 28.05, 4.4, 2).rotation.z = Math.PI/2;
+label('Extractor de humo', 28.7, 7.4, 2);
+
+/* humo */
+const smokeTex = canvasTex(64, 64, (g, w, h) => { const gr = g.createRadialGradient(32,32,2,32,32,30); gr.addColorStop(0,'rgba(225,225,220,0.85)'); gr.addColorStop(0.5,'rgba(225,225,220,0.35)'); gr.addColorStop(1,'rgba(225,225,220,0)'); g.fillStyle = gr; g.fillRect(0,0,w,h); });
+const puffs = [];
+function puff(){
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({map:smokeTex, transparent:true, opacity:0, depthWrite:false}));
+  s.position.set(-10 + Math.random()*20, 0.5, -8 + Math.random()*12); s.scale.setScalar(2);
+  s.userData = {life:0, max:5 + Math.random()*3}; scene.add(s); puffs.push(s);
+}
+
+/* ---------- electrónica: placas, Arduino, notebook ---------- */
+const pcbGreen = M(0x1f6b45, {roughness:0.45});
+const chipMat = M(0x16181a, {roughness:0.55});
+const pinMat = M(0xc9cdd1, {metalness:0.8, roughness:0.3});
+const elec = new THREE.Group(); elec.position.set(46, -1.8, 0); scene.add(elec);
+function board(w, d, x, z, chips, extra){
+  const g = new THREE.Group(); g.position.set(x, 0, z); elec.add(g);
+  [[-w/2+0.6,-d/2+0.6],[w/2-0.6,-d/2+0.6],[-w/2+0.6,d/2-0.6],[w/2-0.6,d/2-0.6]].forEach(([a,b]) => cyl(0.25, 0.9, M(0xd4af37,{metalness:0.6,roughness:0.4}), a, 0.45, b, g, 10));
+  box(w, 0.16, d, pcbGreen, 0, 0.98, 0, g);
+  chips.forEach(([cx, cz, len]) => { box(0.75, 0.35, len, chipMat, cx, 1.24, cz, g); box(0.95, 0.12, len, pinMat, cx, 1.1, cz, g, false); });
+  if (extra) extra(g);
+  return g;
+}
+const chipsA = [];
+for (let r = 0; r < 6; r++) for (let c = 0; c < 2; c++) if (!(r === 5 && c === 1)) chipsA.push([-2.6 + c*5.2, -9 + r*3.4, r < 2 && c === 1 ? 2.0 : 1.9]);
+board(11.7, 23.4, 0, -5, chipsA, g => {
+  box(1.9, 0.6, 1.25, M(0xf2f2f2), 0, 1.38, 9.5, g);                       // display en la placa
+  for (let i = 0; i < 8; i++) box(0.25, 0.9, 0.25, M(0x111111), -5.3, 1.5, -10 + i*0.62, g, false);
+  box(0.25, 0.9, 7.4, M(0x111111), 5.4, 1.5, 3, g, false);                 // tira de pines Arduino
+});
+board(12.7, 10.7, 0.5, 14.5, [[-4,-2.5,1.0],[-1.5,-2.5,1.0],[1,-2.5,1.0],[-4,1.5,1.0],[-1.5,1.5,1.0],[1.5,1.5,1.9]], g => {
+  [[4.2,-3],[4.2,0],[4.2,3]].forEach(([a,b]) => cyl(0.55, 1.2, M(0x0b3d91,{roughness:0.4}), a, 1.66, b, g));
+  box(1.0, 1.6, 0.5, chipMat, -4.6, 1.9, 4.2, g); box(1.0, 0.1, 0.6, pinMat, -4.6, 2.7, 4.2, g);     // TIP120
+  box(0.9, 0.9, 0.9, M(0x2563eb), 2.8, 1.5, -4.3, g); box(0.9, 0.9, 0.9, M(0x2563eb), 4.2, 1.5, -4.3, g); // trimmers
+});
+label('Placa A · lógica', 46, 1.8, -5);
+label('Placa B · potencia', 46.5, 1.8, 14.5);
+/* cable plano entre placas */
+const ribbon = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0.5,1.3,6.4), new THREE.Vector3(0.5,2.4,7.6), new THREE.Vector3(0.5,1.3,9.0)]), 20, 0.18, 6), M(0x9aa0a6));
+elec.add(ribbon);
+/* Arduino */
+const ard = new THREE.Group(); ard.position.set(0, 0, -21.5); elec.add(ard);
+box(6.9, 0.16, 5.3, M(0x0f7c8c, {roughness:0.45}), 0, 0.98, 0, ard);
+box(1.6, 1.1, 1.2, M(0xbfc4c8, {metalness:0.6, roughness:0.35}), -2.9, 1.6, 1.2, ard);
+box(2.6, 0.35, 0.75, chipMat, 1.0, 1.24, 0.6, ard);
+box(5.0, 0.85, 0.3, M(0x111111), 0.3, 1.5, -2.3, ard, false);
+label('Arduino Uno', 46, 1.6, -21.5);
+/* notebook */
+const lap = new THREE.Group(); lap.position.set(74, -1.8, -4); lap.rotation.y = -0.75; lap.scale.setScalar(0.8); scene.add(lap);
+box(32, 1.4, 22, M(0x9ba3a9, {metalness:0.55, roughness:0.35}), 0, 0.7, 0, lap);
+box(28, 0.1, 10, M(0x2b2f33, {roughness:0.7}), 0, 1.42, -2.5, lap, false);
+box(9, 0.08, 5.5, M(0x7f878c, {roughness:0.6}), 0, 1.43, 6.2, lap, false);
+const scr = new THREE.Group(); scr.position.set(0, 1.4, -11); scr.rotation.x = -0.32; lap.add(scr);
+box(32, 21, 0.8, M(0x9ba3a9, {metalness:0.55, roughness:0.35}), 0, 10.5, 0, scr);
+const plantTex = canvasTex(1024, 640, () => {});
+const plant = new THREE.Mesh(new THREE.PlaneGeometry(29.5, 18.4), new THREE.MeshBasicMaterial({map:plantTex, toneMapped:false}));
+plant.position.set(0, 10.8, 0.41); scr.add(plant);
+label('Notebook: plano en vivo', 72, 19, -11);
+/* cable USB Arduino → notebook */
+elec.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
+  new THREE.Vector3(-2.6,1.6,-20.3), new THREE.Vector3(-4,0.3,-26), new THREE.Vector3(6,0.3,-29), new THREE.Vector3(20,0.3,-20), new THREE.Vector3(22,0.8,-8)]), 60, 0.28, 8), M(0x2b2f33)));
+/* cable de sensores desde la maqueta a la placa A */
+elec.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
+  new THREE.Vector3(-17.5,4.8,-14), new THREE.Vector3(-12,2.4,-13.5), new THREE.Vector3(-9,0.4,-12), new THREE.Vector3(-5.5,1.3,-10)]), 40, 0.3, 8), M(0x6b7280)));
+
+/* ---------- autos ---------- */
+const CAR_COLORS = [0xd64545, 0x2f6fd6, 0xf2b134, 0x3aa76d, 0xeeeeee, 0x7b4fd6, 0x23282d, 0xe2763a, 0x15a3a3];
+let colorIdx = 0;
+const glass = M(0x1d2a33, {roughness:0.15, metalness:0.4});
+const tire = M(0x151515, {roughness:0.85});
+const rim = M(0xb8bec3, {metalness:0.7, roughness:0.3});
+function makeCar(){
+  const color = CAR_COLORS[colorIdx++ % CAR_COLORS.length];
+  const paint = M(color, {roughness:0.35, metalness:0.25});
+  const g = new THREE.Group();
+  box(4.2, 1.15, 8.2, paint, 0, 1.15, 0, g);
+  box(4.0, 0.4, 7.6, paint, 0, 0.62, 0, g);
+  box(3.7, 1.05, 4.0, glass, 0, 2.2, 0.5, g);
+  box(3.76, 0.18, 3.6, paint, 0, 2.78, 0.6, g);
+  box(0.8, 0.35, 0.12, M(0xfff7d6, {emissive:0xfff2c0, emissiveIntensity:0.6}), -1.4, 1.25, -4.1, g, false);
+  box(0.8, 0.35, 0.12, M(0xfff7d6, {emissive:0xfff2c0, emissiveIntensity:0.6}), 1.4, 1.25, -4.1, g, false);
+  box(0.9, 0.3, 0.12, M(0x9b1111, {emissive:0x660000}), -1.4, 1.3, 4.1, g, false);
+  box(0.9, 0.3, 0.12, M(0x9b1111, {emissive:0x660000}), 1.4, 1.3, 4.1, g, false);
+  const wheels = [];
+  [[-2.05,-2.6],[2.05,-2.6],[-2.05,2.7],[2.05,2.7]].forEach(([x, z]) => {
+    const w = new THREE.Group(); w.position.set(x, 0.72, z);
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.72, 0.55, 20), tire); t.rotation.z = Math.PI/2; t.castShadow = true; w.add(t);
+    const r = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.58, 12), rim); r.rotation.z = Math.PI/2; w.add(r);
+    g.add(w); wheels.push(w);
+  });
+  scene.add(g);
+  return {g, wheels, legs:[], li:0, s:0, state:'idle', spot:-1, wait:0};
+}
+const V = (x, z) => new THREE.Vector3(x, 0, z);
+const curve = (...pts) => { const c = new THREE.CatmullRomCurve3(pts.map(p => V(p[0], p[1])), false, 'centripetal'); c.L = c.getLength(); return c; };
+const cars = [];
+const reserved = new Set();
+
+function angLerp(a, b, k){ let d = ((b - a + Math.PI) % (Math.PI*2)) - Math.PI; if (d < -Math.PI) d += Math.PI*2; return a + d*k; }
+function poseOn(car, c, u, reverse){
+  const p = c.getPointAt(u), t = c.getTangentAt(u);
+  car.g.position.set(p.x, 0, p.z);
+  return reverse ? Math.atan2(t.x, t.z) : Math.atan2(-t.x, -t.z);
+}
+
+function parkedCar(spot){
+  const car = makeCar(); car.state = 'parked'; car.spot = spot; reserved.add(spot);
+  car.g.position.set(SPOTS[spot], 0, -13); car.g.rotation.y = 0; cars.push(car); return car;
+}
+
+function enterCar(){
+  const car = makeCar(); car.state = 'entering'; cars.push(car);
+  const approach = curve([-42,23.2],[-30,23.2],[-19,23],[-14,19.5],[-14,17]);
+  car.g.rotation.y = poseOn(car, approach, 0, false); car.g.visible = false;
+  car.legs = [
+    {c:approach, v:15},
+    {waitFn:(car, dt) => {
+       if (gateIn.angle > 78){
+         const free = [0,1,2,3,4,5].filter(i => !reserved.has(i));
+         if (!free.length) return false;
+         const i = free[Math.floor(Math.random()*free.length)];
+         reserved.add(i); car.spot = i;
+         const sx = SPOTS[i];
+         car.legs[2].c = curve([-14,17],[-14,6],[(sx-14)/2 + (sx < -14 ? -1 : 1)*1.5, 1.2],[sx,0],[sx,-6],[sx,-13]);
+         log(`Entra un auto: se abre el portón y va al lugar ${i+1}`);
+         return true;
+       }
+       if (S.LLENO){ car.wait += dt; if (car.wait > 3.6){ rejectCar(car); } }
+       return false; }},
+    {c:null, v:8.5, onEnd:car => { car.state = 'parked'; log(`Lugar ${car.spot+1} ocupado`); }},
+  ];
+}
+function rejectCar(car){
+  car.state = 'rejecting'; car.wait = 0; log('Llega un auto con todo lleno: suena el buzzer y se va');
+  car.legs = [
+    {c:curve([-14,17],[-14,20],[-18.5,22.6]), v:5, rev:true},
+    {c:curve([-18.5,22.6],[-12,23.1],[0,23.2],[42,23.2]), v:15, onEnd:car => removeCar(car)},
+  ];
+  car.li = 0; car.s = 0;
+}
+function exitCar(car){
+  const sx = SPOTS[car.spot], dir = Math.sign(14 - sx) || 1, px = sx - dir*2.2;
+  car.state = 'exiting'; log(`Sale el auto del lugar ${car.spot+1}`);
+  car.legs = [
+    {c:curve([sx,-13],[sx,-7],[px,-1.6]), v:5, rev:true, onEnd:car => { reserved.delete(car.spot); }},
+    {c:curve([px,-1.6],[(px+14)/2,-1.2],[14,2.5],[14,9]), v:8.5},
+    {waitFn:() => gateOut.angle > 78, onStart:() => log('Se abre el portón de salida')},
+    {c:curve([14,9],[14,15],[17.5,18.6],[30,18.8],[42,18.8]), v:15, onEnd:car => removeCar(car)},
+  ];
+  car.li = 0; car.s = 0;
+}
+function removeCar(car){ scene.remove(car.g); cars.splice(cars.indexOf(car), 1); }
+
+function stepCar(car, dt){
+  const leg = car.legs[car.li]; if (!leg) return;
+  if (leg.waitFn){
+    if (!leg.started){ leg.started = true; leg.onStart && leg.onStart(car); }
+    if (leg.waitFn(car, dt)){ car.li++; car.s = 0; }
+    return;
+  }
+  car.s += leg.v * dt;
+  const u = Math.min(car.s / leg.c.L, 1);
+  const target = poseOn(car, leg.c, u, leg.rev);
+  car.g.rotation.y = angLerp(car.g.rotation.y, target, Math.min(1, dt*9));
+  car.g.visible = Math.abs(car.g.position.x) < 34.2;
+  const spin = (leg.rev ? -1 : 1) * leg.v * dt / 0.72;
+  car.wheels.forEach(w => w.rotation.x -= spin);
+  if (u >= 1){ car.li++; car.s = 0; leg.onEnd && leg.onEnd(car); }
+}
+
+/* ---------- lógica del circuito ---------- */
+const S = {F:[1,1,1,1,1,1], LIBRE:true, LLENO:false, ACC:false, SAL:false, PORTON:false, PORTON_S:false, AVISO:false, BZ:false, NOCHE:false, LUCES:false, GAS:false, TEST:false, libres:6};
+const mono = () => ({on:false, t0:0});
+const mIn = mono(), mOut = mono(), mBz = mono();
+function runMono(m, trig, T, now){ if (trig){ if (!m.on){ m.on = true; m.t0 = now; } } else if (m.on && now - m.t0 >= T) m.on = false; return m.on; }
+
+let night = 0, nightTarget = 0, gas = 0, gasEmit = 0;
+function logic(now, dt){
+  const near = (c, x, z1, z2, wx=3) => Math.abs(c.g.position.x - x) < wx && c.g.position.z > z1 && c.g.position.z < z2;
+  S.F = SPOTS.map(x => cars.some(c => near(c, x, -20, -8.6, 3.4)) ? 0 : 1);
+  S.libres = S.F.reduce((a, b) => a + b, 0);
+  S.LIBRE = S.libres > 0; S.LLENO = !S.LIBRE;
+  S.ACC = cars.some(c => near(c, -14, 14.6, 19.5));
+  S.SAL = cars.some(c => near(c, 14, 6, 11));
+  S.PORTON = runMono(mIn, S.ACC && S.LIBRE, 5, now);
+  S.PORTON_S = runMono(mOut, S.SAL, 5, now);
+  S.AVISO = S.ACC && S.LLENO;
+  S.BZ = runMono(mBz, S.AVISO, 3, now);
+  S.NOCHE = night > 0.5; S.LUCES = S.NOCHE;
+  S.GAS = gas > 0.28;
+}
+
+/* ---------- actualizar lo que se ve ---------- */
+const NIGHT_BG = new THREE.Color(0x0b1220);
+let dayBg = new THREE.Color(0xdfe5e7);
+function readBg(){ const v = getComputedStyle(document.documentElement).getPropertyValue('--scene').trim(); if (v) dayBg = new THREE.Color(v); }
+readBg(); matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readBg);
+new MutationObserver(readBg).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+let lastSegKey = '', lastPlanKey = '';
+function visuals(dt, t){
+  const sp = Math.min(1, dt*6);
+  for (const [g, open] of [[gateIn, S.PORTON], [gateOut, S.PORTON_S]]){
+    const target = open ? 90 : 0;
+    g.angle += Math.sign(target - g.angle) * Math.min(Math.abs(target - g.angle), 260*dt);
+    g.pivot.rotation.z = g.dir * g.angle * Math.PI/180;
+  }
+  S.F.forEach((f, i) => spotLeds[i].material.emissive.setHex(f ? 0x000000 : 0xff1a1a));
+  accLed.material.emissive.setHex(S.ACC ? 0xff1a1a : 0x000000);
+  salLed.material.emissive.setHex(S.SAL ? 0xff1a1a : 0x000000);
+  const gOn = S.LIBRE || S.TEST, rOn = S.LLENO || S.TEST;
+  setC(ledG.material.color, gOn ? 0x22c55e : 0x123d22); ledG.material.emissive.setHex(gOn ? 0x16a34a : 0x000000); ledG.material.emissiveIntensity = gOn ? 1.4 : 0;
+  setC(ledR.material.color, rOn ? 0xef4444 : 0x4a0d0d); ledR.material.emissive.setHex(rOn ? 0xdc2626 : 0x000000); ledR.material.emissiveIntensity = rOn ? 1.4 : 0;
+  buzzer.position.y = 9.0 + (S.BZ ? Math.sin(t*90)*0.04 : 0);
+  const segKey = S.TEST ? 'T' : String(S.libres);
+  if (segKey !== lastSegKey){ drawSeg(S.libres, S.TEST); lastSegKey = segKey; }
+
+  night += (nightTarget - night) * Math.min(1, dt*1.8);
+  hemi.intensity = 0.8 - night*0.74; sun.intensity = 1.35 - night*1.3; fill.intensity = 0.35 - night*0.33; renderer.toneMappingExposure = 1.0 + night*0.15;
+  scene.background = dayBg.clone().lerp(NIGHT_BG, night);
+  roofLights.forEach(({m, pl}) => { const k = S.LUCES ? 1 : 0; pl.intensity += (k*1.3 - pl.intensity)*sp; m.material.emissive.setHex(0xfff2d0); m.material.emissiveIntensity = pl.intensity*0.9; });
+
+  if (gasEmit > 0){ gasEmit -= dt; gas = Math.min(1, gas + dt*0.35); }
+  if (S.GAS) gas = Math.max(0, gas - dt*0.12); else gas = Math.max(0, gas - dt*0.02);
+  fan.userData.v = (fan.userData.v || 0) + ((S.GAS ? 22 : 0) - (fan.userData.v || 0)) * Math.min(1, dt*1.5);
+  fan.rotation.x += fan.userData.v * dt;
+  if (gas > 0.05 && Math.random() < gas*dt*24) puff();
+  for (let i = puffs.length - 1; i >= 0; i--){
+    const p = puffs[i], u = p.userData; u.life += dt;
+    p.position.y = Math.min(H - 0.8, p.position.y + dt*1.1);
+    if (S.GAS){ p.position.x += (27.5 - p.position.x)*dt*0.5; p.position.z += (2 - p.position.z)*dt*0.5; }
+    p.scale.setScalar(2 + u.life*1.2);
+    const a = Math.min(1, u.life*0.7) * Math.max(0, 1 - u.life/u.max) * 0.2;
+    p.material.opacity = a;
+    if (u.life > u.max || (S.GAS && p.position.x > 26.5)){ scene.remove(p); p.material.dispose(); puffs.splice(i, 1); }
+  }
+
+  const planKey = S.F.join('') + S.PORTON + S.PORTON_S + S.GAS + S.LLENO;
+  if (planKey !== lastPlanKey){ drawPlan(); lastPlanKey = planKey; }
+}
+
+function drawPlan(){
+  const {c, g} = plantTex.userData, w = c.width, h = c.height;
+  g.fillStyle = '#0f172a'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#e2e8f0'; g.font = '600 34px "IBM Plex Sans", sans-serif'; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  g.fillText('Estacionamiento · estado en vivo', 40, 60);
+  g.font = '500 24px "IBM Plex Mono", monospace'; g.fillStyle = S.LLENO ? '#f87171' : '#4ade80';
+  g.fillText(S.LLENO ? 'LLENO' : `${S.libres} libres de 6`, 40, 100);
+  const bw = 140, bh = 230, gap = 14, x0 = (w - (6*bw + 5*gap))/2;
+  S.F.forEach((f, i) => {
+    const x = x0 + i*(bw + gap), y = 140;
+    g.fillStyle = f ? '#14532d' : '#7f1d1d'; g.fillRect(x, y, bw, bh);
+    g.strokeStyle = f ? '#4ade80' : '#f87171'; g.lineWidth = 4; g.strokeRect(x+2, y+2, bw-4, bh-4);
+    g.fillStyle = '#f8fafc'; g.font = '700 64px "IBM Plex Mono", monospace'; g.textAlign = 'center';
+    g.fillText(String(i+1), x + bw/2, y + 110);
+    g.font = '600 22px "IBM Plex Sans", sans-serif'; g.fillText(f ? 'LIBRE' : 'OCUPADO', x + bw/2, y + 170);
+  });
+  g.textAlign = 'left'; g.font = '500 24px "IBM Plex Mono", monospace';
+  const chip = (txt, on, x, col) => { g.fillStyle = on ? col : '#334155'; g.fillRect(x, 410, 290, 48); g.fillStyle = on ? '#0f172a' : '#94a3b8'; g.fillText(txt, x + 16, 442); };
+  chip('Portón entrada', S.PORTON, 40, '#4ade80');
+  chip('Portón salida', S.PORTON_S, 360, '#4ade80');
+  chip(S.GAS ? 'GAS: extractor ON' : 'Aire normal', S.GAS, 680, '#fbbf24');
+  g.fillStyle = '#64748b'; g.font = '400 20px "IBM Plex Sans", sans-serif';
+  g.fillText('Datos leídos por el Arduino desde la placa A (F1–F6, BCD, LLENO, GAS, portones)', 40, 520);
+  plantTex.needsUpdate = true;
+}
+
+/* ---------- panel HTML ---------- */
+const spotsEl = document.getElementById('spots');
+spotsEl.innerHTML = SPOTS.map((_, i) => `<div class="spot" id="sp${i}">L${i+1}</div>`).join('');
+const SIGS = [
+  ['LIBRE', 'LED verde', 'LIBRE', ''], ['LLENO', 'LED rojo', 'LLENO', 'bad'],
+  ['ACC', 'Auto en la entrada', 'ACC', 'amb'], ['PORTON', 'Portón de entrada abierto', 'U20 · 555', ''],
+  ['SAL', 'Auto en la salida', 'SAL', 'amb'], ['PORTON_S', 'Portón de salida abierto', 'U24 · 555', ''],
+  ['BZ', 'Buzzer', 'U23 · 555', 'bad'], ['LUCES', 'Luces internas', 'LDR', 'amb'], ['GAS', 'Extractor', 'MQ-2', 'amb'],
+];
+document.getElementById('sig').innerHTML = SIGS.map(([k, n, s]) => `<dt>${n}<small>${s}</small></dt><dd id="s_${k}">0</dd>`).join('');
+let lastPanel = '';
+function panel(){
+  const key = JSON.stringify(S);
+  if (key === lastPanel) return; lastPanel = key;
+  document.getElementById('cnt').textContent = S.TEST ? '8' : S.libres;
+  S.F.forEach((f, i) => document.getElementById('sp' + i).classList.toggle('occ', !f));
+  SIGS.forEach(([k, , , cls]) => { const el = document.getElementById('s_' + k), on = !!S[k];
+    el.textContent = on ? '1' : '0'; el.className = on ? 'hi ' + cls : ''; });
+  const busyIn = cars.some(c => c.state === 'entering' || c.state === 'rejecting');
+  bIn.disabled = busyIn; bOut.disabled = cars.some(c => c.state === 'exiting') || !cars.some(c => c.state === 'parked');
+}
+const logEl = document.getElementById('log'); const t0 = performance.now();
+function log(msg){
+  const s = Math.floor((performance.now() - t0)/1000), mm = String(Math.floor(s/60)).padStart(2, '0'), ss = String(s%60).padStart(2, '0');
+  const li = document.createElement('li'); li.innerHTML = `<time>${mm}:${ss}</time><b></b>`; li.querySelector('b').textContent = msg;
+  logEl.prepend(li); while (logEl.children.length > 12) logEl.lastChild.remove();
+}
+
+/* ---------- sonido del buzzer ---------- */
+let audio = null, osc = null, gain = null, sound = false;
+function setBuzz(on){
+  if (!sound) { if (gain) gain.gain.value = 0; return; }
+  if (!audio){ audio = new (window.AudioContext || window.webkitAudioContext)(); osc = audio.createOscillator(); gain = audio.createGain(); osc.type = 'square'; osc.frequency.value = 2400; gain.gain.value = 0; osc.connect(gain).connect(audio.destination); osc.start(); }
+  gain.gain.setTargetAtTime(on ? 0.04 : 0, audio.currentTime, 0.01);
+}
+
+/* ---------- botones ---------- */
+const bIn = document.getElementById('bIn'), bOut = document.getElementById('bOut'), bAuto = document.getElementById('bAuto');
+const bNight = document.getElementById('bNight'), bGas = document.getElementById('bGas'), bTest = document.getElementById('bTest');
+const bLbl = document.getElementById('bLbl'), bSnd = document.getElementById('bSnd');
+bIn.onclick = () => { if (!bIn.disabled) enterCar(); };
+bOut.onclick = () => { const p = cars.filter(c => c.state === 'parked'); if (p.length) exitCar(p[Math.floor(Math.random()*p.length)]); };
+bAuto.onclick = () => { const on = bAuto.getAttribute('aria-pressed') !== 'true'; bAuto.setAttribute('aria-pressed', on); };
+bNight.onclick = () => { const on = bNight.getAttribute('aria-pressed') !== 'true'; bNight.setAttribute('aria-pressed', on); nightTarget = on ? 1 : 0; log(on ? 'Se hace de noche: el LDR enciende las luces' : 'Se hace de día: se apagan las luces'); };
+bGas.onclick = () => { gasEmit = 4; log('Se libera gas cerca del MQ-2'); };
+const testOn = e => { e.preventDefault(); S.TEST = true; };
+const testOff = () => { S.TEST = false; };
+bTest.addEventListener('pointerdown', testOn); bTest.addEventListener('pointerup', testOff); bTest.addEventListener('pointerleave', testOff);
+bTest.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') S.TEST = true; });
+bTest.addEventListener('keyup', testOff);
+document.getElementById('bFull').onclick = () => {
+  const free = [0,1,2,3,4,5].filter(i => !reserved.has(i));
+  bAuto.setAttribute('aria-pressed', 'false');
+  if (!free.length){ log('Ya están los 6 lugares ocupados'); return; }
+  free.forEach(parkedCar);
+  log(`Se llenan los lugares ${free.map(i => i+1).join(', ')}: estacionamiento LLENO`);
+};
+bLbl.onclick = () => { const on = bLbl.getAttribute('aria-pressed') !== 'true'; bLbl.setAttribute('aria-pressed', on); labels.forEach(l => l.visible = on); };
+bSnd.onclick = () => { sound = bSnd.getAttribute('aria-pressed') !== 'true'; bSnd.setAttribute('aria-pressed', sound); setBuzz(false); };
+
+/* ---------- demo automática ---------- */
+let nextAuto = 2.5, rejectedLast = false;
+function autoDemo(dt){
+  if (bAuto.getAttribute('aria-pressed') !== 'true') return;
+  nextAuto -= dt; if (nextAuto > 0) return;
+  const busyIn = cars.some(c => c.state === 'entering' || c.state === 'rejecting'), busyOut = cars.some(c => c.state === 'exiting');
+  const parked = cars.filter(c => c.state === 'parked');
+  if (busyIn && busyOut){ nextAuto = 1; return; }
+  let doIn;
+  if (reserved.size >= 6) doIn = !rejectedLast && Math.random() < 0.6;
+  else if (parked.length <= 2) doIn = true;
+  else doIn = Math.random() < 0.6;
+  if (doIn && !busyIn){ enterCar(); rejectedLast = reserved.size >= 6; }
+  else if (!busyOut && parked.length){ exitCar(parked[Math.floor(Math.random()*parked.length)]); rejectedLast = false; }
+  nextAuto = 3.5 + Math.random()*3;
+}
+
+/* ---------- estado inicial ---------- */
+[0, 2, 3, 5].forEach(parkedCar);
+log('Simulación lista: 4 autos estacionados');
+
+/* ---------- tamaño y bucle ---------- */
+function resize(){
+  const w = viewer.clientWidth, h = viewer.clientHeight;
+  renderer.setSize(w, h, false); labelR.setSize(w, h);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(viewer); resize();
+
+const clock = new THREE.Clock();
+let lastBz = false;
+function frame(){
+  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+  if (camAnim){
+    camAnim.k = Math.min(1, camAnim.k + dt*1.4); const e = 1 - Math.pow(1 - camAnim.k, 3);
+    camera.position.lerpVectors(camAnim.fromP, camAnim.to.p, e); controls.target.lerpVectors(camAnim.fromT, camAnim.to.t, e);
+    if (camAnim.k >= 1) camAnim = null;
+  }
+  autoDemo(dt);
+  cars.slice().forEach(c => stepCar(c, dt));
+  logic(t, dt);
+  visuals(dt, t);
+  if (S.BZ !== lastBz){ setBuzz(S.BZ); lastBz = S.BZ; }
+  panel();
+  controls.update();
+  renderer.render(scene, camera); labelR.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+drawSeg(2, false); drawPlan();
+frame();
+})();
+</script>
+
+</body>
+</html>
